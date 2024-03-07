@@ -1,6 +1,6 @@
 # coin-script
 
-一个简单、安全的 web3 脚本
+一个简单、安全的 web3 脚本库
 
 ## 使用说明
 
@@ -18,4 +18,21 @@ lava net 的积分是通过调用 rpc 节点获得，使用 `lava/rpc.ts` 脚本
 1. 在 [lava](https://points.lavanet.xyz/) 获取 rpc 节点
 2. 将获取到的 rpc 节点配置到 `config.toml` 中
 3. 使用 `bun lava/rpc.ts > lava.log &` 后台运行
+
+## 项目说明
+
+| 名称 | 交互类型 | 成本 | 生态 | 备注 |
+| -- | -- | -- | -- | -- |
+| lava | rpc 节点调用 | 低 | | |
+| frame | 智能合约交互 | 低 | | 需要领水 Sepolia、测试网 |
+
+## 开发说明
+
+待开发
+
+- [ ] 代理
+- [ ] 钱包管理
+
+
+
 
