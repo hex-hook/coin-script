@@ -1,0 +1,3 @@
+[lava]
+rpc = ['3ac1cd7f-aff9-4a3f-90be-6ddacf07fcaa', 'd7711b96-f6fd-464c-80ac-e3bca9cc23ad'] # rpc id，通过 lava 站点获取
+inviteCode = '7K8SF'
