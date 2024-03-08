@@ -30,7 +30,8 @@ async function batchGetBalance(provider: ethers.Provider, wallet: ethers.HDNodeW
             const balance = await provider.getBalance(address)
             if (balance > 0) {
                 // 如果碰撞到有资产的地址，会将地址、私钥、资产打印出来，可从中获取资产（基本不可能）
-                console.log(address, child.privateKey, ethers.formatEther(balance));
+                // 使用 cat xxx.log | grep address 提取
+                console.log(`address: ${address} key: ${child.privateKey} balance:${ethers.formatEther(balance)}`);
             }
             success++;
         } catch (e) {
