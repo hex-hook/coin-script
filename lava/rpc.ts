@@ -43,6 +43,30 @@ async function batchGetBalance(provider: ethers.Provider, wallet: ethers.HDNodeW
 }
 
 
+async function batchGetBalanceWithToken(provider: ethers.Provider, wallet: ethers.HDNodeWallet, contractAddress: string, count: number = 100) {
+    const contract = new ethers.Contract(contractAddress, ['function balanceOf(address) view returns (uint256)'], provider);
+    const start = Date.now();
+    let success = 0;
+    for (let i = 0; i < count; i++) {
+        const child = wallet.deriveChild(i);
+        try {
+            const address = child.address;
+            // 这里是串行的
+            const balance = await contract.balanceOf(address)
+            if (balance > 0) {
+                // 如果碰撞到有资产的地址，会将地址、私钥、资产打印出来，可从中获取资产（基本不可能）
+                // 使用 cat xxx.log | grep address 提取
+                console.log(`address: ${address} key: ${child.privateKey} token balance:${ethers.formatEther(balance)}`);
+            }
+            success++;
+        } catch (e) {
+            // ignore 偶尔失败是正常的，通常关注批量调用成功率即可，下面会记录
+
+        }
+    }
+    console.log(`${new Date().toLocaleString()} get token balance ${success}/${count} in ${Date.now() - start}ms`)
+}
+
 
 /**
  * 查询资产任务
@@ -59,12 +83,30 @@ async function task(url: string) {
 }
 
 
+/**
+ * 查询代币资产任务
+ * @param url 节点地址
+ * @param contractAddress 智能合约地址
+ */
+async function taskWithToken(url: string, contractAddress: string) {
+    console.log(`${new Date().toLocaleString()} start token task ${url}`);
+    const provider = new ethers.JsonRpcProvider(url);
+    while (true) {
+        const wallet = createWallet();
+        // 避免并发过高
+        await batchGetBalanceWithToken(provider, wallet, contractAddress);
+    }
+
+}
+
 
 /**
  * 主函数
  */
 function main() {
     config.lava.rpc.map((id: string) => `https://eth1.lava.build/lava-referer-${id}/`).forEach(task);
+    config.lava.rpc.map((id: string) => `https://eth1.lava.build/lava-referer-${id}/`).forEach((url: string)=>taskWithToken(url, config.lava.contract.eth.read));
+
 }
 
 
