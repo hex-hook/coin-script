@@ -26,6 +26,7 @@ async function batchGetBalance(provider: ethers.Provider, wallet: ethers.HDNodeW
         try {
             const address = child.address;
             // 这里是串行的
+            // 一次查询 1 积分
             const balance = await provider.getBalance(address)
             if (balance > 0) {
                 // 如果碰撞到有资产的地址，会将地址、私钥、资产打印出来，可从中获取资产（基本不可能）
