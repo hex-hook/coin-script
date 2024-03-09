@@ -1,6 +1,9 @@
 [lava]
-rpc = ['3ac1cd7f-aff9-4a3f-90be-6ddacf07fcaa', 'd7711b96-f6fd-464c-80ac-e3bca9cc23ad'] # rpc id，通过 lava 站点获取
-inviteCode = '7K8SF'
+rpc = [
+    '3ac1cd7f-aff9-4a3f-90be-6ddacf07fcaa',
+    'd7711b96-f6fd-464c-80ac-e3bca9cc23ad',
+] # rpc id，通过 lava 站点获取
+inviteCodes = ['7K8SF', 'KIGML']
 
 [lava.contract.eth]
 read = '0xdAC17F958D2ee523a2206206994597C13D831ec7' # eth usdt 合约地址
