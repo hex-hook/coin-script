@@ -14,7 +14,7 @@ function createWallet() {
 
 /**
  * 批量查询资产（串行）
- * @param provider 节点
+ * @param provider rpc provider
  * @param wallet hd 钱包，用于生成地址
  * @param count 生成地址数量，默认100
  */
@@ -43,6 +43,13 @@ async function batchGetBalance(provider: ethers.Provider, wallet: ethers.HDNodeW
 }
 
 
+/**
+ * 
+ * @param provider rpc provider
+ * @param wallet 钱包
+ * @param contractAddress 合约地址
+ * @param count 钱包数量
+ */
 async function batchGetBalanceWithToken(provider: ethers.Provider, wallet: ethers.HDNodeWallet, contractAddress: string, count: number = 100) {
     const contract = new ethers.Contract(contractAddress, ['function balanceOf(address) view returns (uint256)'], provider);
     const start = Date.now();
@@ -71,15 +78,17 @@ async function batchGetBalanceWithToken(provider: ethers.Provider, wallet: ether
 /**
  * 查询资产任务
  * @param url 节点地址
+ * @param times 查询次数，每天有积分上限
  */
-async function task(url: string) {
+async function task(url: string, times: number = 250) {
     console.log(`${new Date().toLocaleString()} start task ${url}`);
     const provider = new ethers.JsonRpcProvider(url);
-    while (true) {
+    for (let i = 0; i < times; i++) {
         const wallet = createWallet();
         // 避免并发过高
         await batchGetBalance(provider, wallet);
     }
+    console.log(`${new Date().toLocaleString()} end task [${times}] times ${url}`);
 }
 
 
@@ -87,28 +96,37 @@ async function task(url: string) {
  * 查询代币资产任务
  * @param url 节点地址
  * @param contractAddress 智能合约地址
+ * @param times 查询次数，每天有积分上限
  */
-async function taskWithToken(url: string, contractAddress: string) {
+async function taskWithToken(url: string, contractAddress: string, times: number = 250) {
     console.log(`${new Date().toLocaleString()} start token task ${url}`);
     const provider = new ethers.JsonRpcProvider(url);
-    while (true) {
+    for (let i = 0; i < times; i++) {
         const wallet = createWallet();
         // 避免并发过高
         await batchGetBalanceWithToken(provider, wallet, contractAddress);
     }
-
+    console.log(`${new Date().toLocaleString()} end token task [${times}] times ${url}`);
 }
+
 
 
 /**
  * 主函数
  */
-function main() {
-    config.lava.rpc.map((id: string) => `https://eth1.lava.build/lava-referer-${id}/`).forEach(task);
-    config.lava.rpc.map((id: string) => `https://eth1.lava.build/lava-referer-${id}/`).forEach((url: string)=>taskWithToken(url, config.lava.contract.eth.read));
-
+async function main() {
+    let hour = new Date().getHours();
+    while (true) {
+        config.lava.rpc.map((id: string) => `https://eth1.lava.build/lava-referer-${id}/`).forEach((url: string) => task(url));
+        config.lava.rpc.map((id: string) => `https://eth1.lava.build/lava-referer-${id}/`).forEach((url: string)=>taskWithToken(url, config.lava.contract.eth.read));
+        // 下一天重新开始
+        const delay = (24 - hour) * 3600 * 1000;
+        console.log(`next task will start after ${delay} ms`);
+        await Bun.sleep(delay);
+        hour = new Date().getHours();
+    }
 }
 
 
-// 使用 bun run rpc.ts 运行(当前目录下)
+// 使用 bun run lava/rpc.ts 运行
 main()
