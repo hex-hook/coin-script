@@ -10,6 +10,8 @@ interface UserInfo {
     points?: number
     // 排名
     rank?: number
+    // 邀请码
+    inviteCode?: string
 }
 
 /**
@@ -39,16 +41,16 @@ async function login(address: string, inviteCode: string, process: 'token' | 've
     if (res.success) {
         return [res.data, newCookie.join(';')]
     }
-    throw new Error(`${address} login failed: ${res}`)
+    throw new Error(`${address} login failed: ${JSON.stringify(res)}`)
 }
 
 /**
  * 生成 lava id
  * @param wallet 钱包
+ * @param inviteCode 邀请码
  * @returns
  */
-async function generateRPC(wallet: ethers.Wallet | ethers.HDNodeWallet): Promise<[UserInfo, string]> {
-    const inviteCode = config.lava.inviteCode;
+async function generateRPC(wallet: ethers.Wallet | ethers.HDNodeWallet, inviteCode: string): Promise<[UserInfo, string]> {
     const loginResult = await login(wallet.address, inviteCode, 'token');
     // 这里会进行一次签名，签名参数为 lava login 返回的 data，存在一定安全风险
     const signed = await wallet.signMessage(Buffer.from(loginResult[0]));
@@ -57,6 +59,16 @@ async function generateRPC(wallet: ethers.Wallet | ethers.HDNodeWallet): Promise
         id,
         address: wallet.address,
     }, cookie]
+}
+
+
+/**
+ * 从配置中随机获取邀请码
+ * @returns 随机邀请码
+ */
+function getRandomInviteCode(): string {
+    const codes = config.lava.inviteCodes;
+    return codes[parseInt(`${Math.random() * codes.length}`)];
 }
 
 
@@ -73,8 +85,9 @@ async function generateRPCs(count: number = 10) {
     // 循环生成 rpc id，单个 HD 、单次循环不建议过多
     for (let i = 0; i < count; i++) {
         const child = wallet.deriveChild(i);
+        const inviteCode = getRandomInviteCode();
         try {
-            const item = await generateRPC(child);
+            const item = await generateRPC(child, inviteCode);
             res.push(item[0]);
         } catch (e) {
             console.error(e);
@@ -91,10 +104,11 @@ async function generateRPCs(count: number = 10) {
 /**
  * 查询积分信息
  * @param wallet 钱包
+ * @param inviteCode 邀请码
  * @returns 
  */
-async function queryMe(wallet: ethers.Wallet | ethers.HDNodeWallet): Promise<UserInfo>{
-    const [info, cookie] = await generateRPC(wallet);
+async function queryMe(wallet: ethers.Wallet | ethers.HDNodeWallet, inviteCode: string): Promise<UserInfo>{
+    const [info, cookie] = await generateRPC(wallet, inviteCode);
     const resp = await fetch('https://points-api.lavanet.xyz/api/v1/users/me', {
         headers: {
             Cookie: cookie,
@@ -104,55 +118,66 @@ async function queryMe(wallet: ethers.Wallet | ethers.HDNodeWallet): Promise<Use
     const stats = res.stats
     info.points = stats.points.total_points;
     info.rank = stats.rank;
+    info.inviteCode = res.invite_url.split('=')[1];
     return info
 }
 
 
 /**
- * 通过助记词查询积分信息
- * @param mnemonic 助记词，格式 "word1 word2 word3 ..."
- * @param count 派生的钱包数量，派生方式见 generateRPCs
+ * 打印个人信息
+ * @param res 查询个人信息结果
  */
-async function queryMeByMnemonic(mnemonic: string, count: number) {
-    const res = []
-    const rootWallet = ethers.HDNodeWallet.fromPhrase(mnemonic);
-    for (let i = 0; i < count; i++) {
-        try {
-            const wallet = rootWallet.deriveChild(i);
-            const item = await queryMe(wallet);
-            res.push(item)
-        } catch (e) {
-            console.error(e);
-        }
-    }
+function printResult(res: UserInfo[]) {
     if (res.length > 0) {
         console.table(res);
+        console.log(`将 ${res.map(item => "'" + item.id + "'").join(',')} 添加到 config.toml 中的 rpc 字段中`)
+        console.log(`邀请码 ${res.map(item => "'" + item.inviteCode + "'").join(',')} 添加到 config.toml 中的 inviteCodes 字段中`)
     } else {
         console.error('query failed')
     }
 }
 
+/**
+ * 通过助记词查询积分信息
+ * @param mnemonic 助记词，格式 "word1 word2 word3 ..."
+ * @param count 派生的钱包数量，派生方式见 generateRPCs
+ * @param startIndex 派生的钱包起始索引，默认 0，可以在同一个助记词基础上继续派生
+ */
+async function queryMeByMnemonic(mnemonic: string, count: number, startIndex: number = 0) {
+    const res = []
+    const rootWallet = ethers.HDNodeWallet.fromPhrase(mnemonic);
+    const end = startIndex + count;
+    for (let i = startIndex; i < end; i++) {
+        try {
+            const inviteCode = getRandomInviteCode();
+            const wallet = rootWallet.deriveChild(i);
+            const item = await queryMe(wallet, inviteCode);
+            res.push(item)
+        } catch (e) {
+            console.error(e);
+        }
+    }
+    printResult(res);
+}
+
 
 /**
- * 通过私钥查询积分信息
+ * 通过私钥查询积分信息（建议使用 HD 钱包，方便管理，避免管理过多私钥）
  * @param keys 私钥数组 ["0x...", "0x..."]
  */
 async function queryMeByKeys(keys: string[]) {
     const res = []
     for (const key of keys) {
         try {
+            const inviteCode = getRandomInviteCode();
             const wallet = new ethers.Wallet(key);
-            const item = await queryMe(wallet);
+            const item = await queryMe(wallet, inviteCode);
             res.push(item)
         } catch (e) {
             console.error(e);
         }
     }
-    if (res.length > 0) {
-        console.table(res);
-    } else {
-        console.error('query failed')
-    }
+    printResult(res);
 }
 
 /**

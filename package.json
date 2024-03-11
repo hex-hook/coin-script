@@ -9,6 +9,10 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "ethers": "^6.11.1"
+    "@solana/web3.js": "^1.91.0",
+    "bip39": "^3.1.0",
+    "ethers": "^6.11.1",
+    "micro-ed25519-hdkey": "^0.1.2",
+    "tweetnacl": "^1.0.3"
   }
 }
