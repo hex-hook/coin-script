@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import nacl from 'tweetnacl';
 import { HDWallet } from '../util/solana'
 import config from './config.toml'
-import { sleepRandom } from '../util/time';
+import { sleepRandom, nowDateTimeString } from '../util/time';
 
 const URL_PREFIX = "https://api.v-token.io/api/points";
 
@@ -16,30 +16,6 @@ async function superiors(address: string): Promise<boolean> {
     const resp = await fetch(`${URL_PREFIX}/superiors?address=${address}`);
     const json = await resp.json();
     return json.code == 200
-}
-
-/**
- * 查询当前积分信息
- * @param address 地址
- * @returns 
- */
-async function home(address: string) {
-    const resp = await fetch(`${URL_PREFIX}/home?address=${address}`);
-    const json = await resp.json();
-    if (json.code != 200) {
-        throw new Error(json.msg)
-    }
-    return {
-        address,
-        // 邀请码
-        inviteCode: json.data.referrals_code,
-        // 总积分
-        totalPoints: json.data.earnings,
-        // 签到积分
-        checkInPoints: json.data.broadband_points,
-        // 邀请积分
-        invitePoints: json.data.invite_points
-    }
 }
 
 /**
@@ -114,14 +90,14 @@ async function inviteTask() {
             try {
                 const invited = await invite(inviteAddress, code)
                 if (invited) {
-                    console.log(`${code} 邀请 ${inviteAddress} 成功`)
+                    console.log(`${nowDateTimeString()} ${code} 邀请 ${inviteAddress} 成功`)
                 } else {
-                    console.error(`${code} 邀请 ${inviteAddress} 失败`)
+                    console.error(`${nowDateTimeString()} ${code} 邀请 ${inviteAddress} 失败`)
                 }
                 // 适当的等待
                 await sleepRandom()
             } catch (e) {
-                console.error(`${code} 邀请 ${inviteAddress} 失败`, e)
+                console.error(`${nowDateTimeString()} ${code} 邀请 ${inviteAddress} 失败`, e)
             }
 
         }
@@ -139,7 +115,7 @@ async function registerAndCheckIn(address: string, key: string) {
     if (!isRegister) {
         const registered = await invite(address, getRandomInviteCode())
         if (!registered) {
-            console.error(`${address} 注册失败`)
+            console.error(`${nowDateTimeString()} ${address} 注册失败`)
             return
         }
         await sleepRandom()
@@ -157,12 +133,12 @@ async function registerAndCheckIn(address: string, key: string) {
 
         const res = await checkIn(address, Buffer.from(signed).toString('hex'), timestamp)
         if (res) {
-            console.log(`${address} 签到成功`)
+            console.log(`${nowDateTimeString()} ${address} 签到成功`)
         } else {
-            console.error(`${address} 签到失败`)
+            console.error(`${nowDateTimeString()} ${address} 签到失败`)
         }
     } catch (e) {
-        console.error(`${address} 签到失败`, e)
+        console.error(`${nowDateTimeString()} ${address} 签到失败`, e)
     }
 }
 
@@ -180,27 +156,6 @@ async function checkInTask() {
 }
 
 
-/**
- * 批量查询积分 (通过配置文件中的助记词)
- */
-async function queryPoints() {
-    const wallet = new HDWallet(config.wallet.mnemonic);
-    const count = config.wallet.count;
-    let res = await Promise.all(Array.from({ length: count }).map((_, i) => {
-        const child = wallet.derive(i);
-        try {
-            return home(child.address)
-        } catch (e) {
-            console.error(`查询 ${child.address} 积分失败`, e)
-            return Promise.resolve(null)
-        }
-    }))
-    res = res.filter(x => x != null)
-    console.table(res)
-    console.log(`添加助记词到配置文件中，可刷邀请积分，${res.map(item => "'"+item?.inviteCode+"'").join(',')}`)
-}
-
-
 async function main() {
     while (true) {
         inviteTask()
@@ -208,7 +163,7 @@ async function main() {
         let hour = new Date().getHours();
         // 17 点前签到
         const delay = (hour > 17 ? 12 : 24) * 3600 * 1000;
-        console.log(`next task will start after ${delay} ms`);
+        console.log(`${nowDateTimeString()} next task will start after ${delay} ms`);
         await Bun.sleep(delay);
         hour = new Date().getHours();
     }
@@ -216,6 +171,3 @@ async function main() {
 
 // 签到和刷邀请
 main()
-
-// 批量查看积分
-// queryPoints()

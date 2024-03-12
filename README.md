@@ -58,7 +58,7 @@ lava net 的积分是通过调用 rpc 节点获得，使用 `lava/rpc.ts` 脚本
 
 1. 在 [lava](https://points.lavanet.xyz/) 获取 rpc 节点
 2. 将获取到的 rpc 节点配置到 `config.toml` 中
-3. 使用 `bun lava/rpc.ts > lava.log &` 后台运行
+3. 使用 `bun lava/rpc.ts >> logs/lava.log 2>&1 &` 后台运行
 
 #### 注意事项
 
@@ -68,28 +68,28 @@ lava net 的积分是通过调用 rpc 节点获得，使用 `lava/rpc.ts` 脚本
 
 [sollong](https://app.sollong.xyz/) 可使用邀请码 `ea6m5z`，当前脚本使用了兼容 `phantom` 钱包的算法，可以直接把助记词导入 `phantom` 使用
 
+使用步骤
+
+1. 将可用的、或者需要刷邀请积分的邀请码配置到 `config.toml` 中的 `inviteCodes`
+2. 将需要刷签到的钱包助记词配置到 `config.toml` 中的 `mnemonic`
+3. 完成配置后执行 `bun run sollong/index.ts >> logs/sollong.log 2>&1 &` 即可后台运行
+
+
 #### 每日签到
 
 本地生成助记词（最好是新的，避免安全风险）后配置到 `config.toml` 中，配置通过助记词派生的钱包数量 `wallet.count` 即需要刷的钱包数量。
 
-完成配置后执行 `bun run sollong/index.ts` 即可
-
 
 #### 刷邀请积分
+
+只刷邀请积分**可以不用提供助记词、私钥**
 
 把生成的邀请码，添加到配置文件 `config.toml` 中即可，会跟上面的签到一起执行
 
 #### 批量查询积分
 
-打开 `sollong/index.ts` 中的注释执行即可
+执行 `bun run sollong/util.ts` 即可
 
-```ts
-// 签到和刷邀请
-// main()
-
-// 批量查看积分
-queryPoints()
-```
 
 ## 项目说明
 
