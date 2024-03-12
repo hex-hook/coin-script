@@ -13,14 +13,18 @@ const URL_PREFIX = "https://api.v-token.io/api/points";
  * @returns 
  */
 async function superiors(address: string): Promise<boolean> {
-    const resp = await fetch(`${URL_PREFIX}/superiors?address=${address}`);
-    const json = await resp.json();
-    return json.code == 200
+    try {
+        const resp = await fetch(`${URL_PREFIX}/superiors?address=${address}`);
+        const json = await resp.json();
+        return json.code == 200
+    } catch (e) {
+        console.error(`${nowDateTimeString()} ${address} 查询是否注册失败`, e)
+        return false
+    }
 }
 
 /**
  * 邀请
- * 一个 200 分，一天最多 200 分?
  * @param address 地址
  * @param inviteCode 邀请码
  * @returns 
@@ -30,15 +34,20 @@ async function invite(address: string, inviteCode: string): Promise<boolean> {
         address,
         invite_code: inviteCode
     })
-    const resp = await fetch(`${URL_PREFIX}/invite`, {
-        method: 'POST',
-        body,
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    const json = await resp.json();
-    return json.code == 200
+    try {
+        const resp = await fetch(`${URL_PREFIX}/invite`, {
+            method: 'POST',
+            body,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        const json = await resp.json();
+        return json.code == 200
+    } catch(e) {
+        console.error(`${nowDateTimeString()} ${address} 邀请失败`, e)
+        return false
+    }
 }
 
 /**
@@ -79,6 +88,10 @@ function getRandomInviteCode(): string {
     return codes[Math.floor(Math.random() * codes.length)]
 }
 
+/**
+ * 邀请任务任务
+ * 
+ */
 async function inviteTask() {
     const inviteCodes = config.invite.codes;
     const count = config.invite.count;
@@ -110,13 +123,13 @@ async function inviteTask() {
  * @param address 地址
  * @param key 私钥(base58编码)
  */
-async function registerAndCheckIn(address: string, key: string) {
+async function registerAndCheckIn(address: string, key: string): Promise<boolean> {
     const isRegister = await superiors(address)
     if (!isRegister) {
         const registered = await invite(address, getRandomInviteCode())
         if (!registered) {
             console.error(`${nowDateTimeString()} ${address} 注册失败`)
-            return
+            return false
         }
         await sleepRandom()
     }
@@ -137,8 +150,10 @@ async function registerAndCheckIn(address: string, key: string) {
         } else {
             console.error(`${nowDateTimeString()} ${address} 签到失败`)
         }
+        return res
     } catch (e) {
         console.error(`${nowDateTimeString()} ${address} 签到失败`, e)
+        return false
     }
 }
 
@@ -148,11 +163,17 @@ async function registerAndCheckIn(address: string, key: string) {
 async function checkInTask() {
     const wallet = new HDWallet(config.wallet.mnemonic);
     const count = config.wallet.count;
+    console.log(`${nowDateTimeString()} 开始签到任务，共 ${count} 个地址`)
+    let success = 0;
     for (let i = 0; i < count; i++) {
         const child = wallet.derive(i);
-        await registerAndCheckIn(child.address, child.key)
+        const ok = await registerAndCheckIn(child.address, child.key)
+        if (ok) {
+            success++;
+        }
         await sleepRandom()
     }
+    console.log(`${nowDateTimeString()} 签到任务完成 ${success}/${count} 个地址`)
 }
 
 
