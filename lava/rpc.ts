@@ -44,7 +44,7 @@ async function batchGetBalance(provider: ethers.Provider, wallet: ethers.HDNodeW
 
 
 /**
- * 
+ * 批量查询代币资产（串行）
  * @param provider rpc provider
  * @param wallet 钱包
  * @param contractAddress 合约地址
