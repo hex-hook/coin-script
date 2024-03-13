@@ -185,7 +185,7 @@ async function queryMeByKeys(keys: string[]) {
  */
 function main() {
     // 生成 rpc id，日志中的助记词需要记录下来，仅用于生成 rpc id
-    // generateRPCs();
+    generateRPCs();
 
 
     // 通过助记词查询积分信息，比上面的方法多调一个接口

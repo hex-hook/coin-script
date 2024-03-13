@@ -19,8 +19,10 @@
 
 ## 使用说明
 
-1. 安装 `bun`(nodejs 运行时)，`npm i -g bun`
-2. 安装依赖 `bun install`， ~~当前只依赖了 `ethers`，**为降低安全风险不建议再使用其他依赖**~~，依赖项用途下面都有说明
+当前只支持 `Linux` 和 `Mac`，如果想在 windows 上使用，可以使用 `WSL`。
+
+1. 安装 `bun`(nodejs 运行时)，已经有 nodejs 环境的可以使用 `npm i -g bun` 安装，否则使用 `curl -fsSL https://bun.sh/install | bash` 下载安装
+2. 安装依赖 `bun install`， ~~当前只依赖了 `ethers`，**为降低安全风险不建议再使用其他依赖**~~，依赖项说明见下方[依赖项说明](#依赖项说明)
 
 > 如不使用 bun，也可以把 ts 文件中的代码转为 js 代码使用
 
@@ -58,7 +60,7 @@ lava net 的积分是通过调用 rpc 节点获得，使用 `lava/rpc.ts` 脚本
 
 1. 在 [lava](https://points.lavanet.xyz/) 获取 rpc 节点
 2. 将获取到的 rpc 节点配置到 `config.toml` 中
-3. 使用 `bun lava/rpc.ts > lava.log &` 后台运行
+3. 使用 `nohup bun run lava/rpc.ts >> logs/lava.log 2>&1 &` 后台运行，如果是在服务器上运行，请在断开远程连接后再登录确定进程是否正常
 
 #### 注意事项
 
@@ -68,36 +70,36 @@ lava net 的积分是通过调用 rpc 节点获得，使用 `lava/rpc.ts` 脚本
 
 [sollong](https://app.sollong.xyz/) 可使用邀请码 `ea6m5z`，当前脚本使用了兼容 `phantom` 钱包的算法，可以直接把助记词导入 `phantom` 使用
 
+使用步骤
+
+1. 将可用的、或者需要刷邀请积分的邀请码配置到 `config.toml` 中的 `inviteCodes`
+2. 将需要刷签到的钱包助记词配置到 `config.toml` 中的 `mnemonic`
+3. 完成配置后执行 `bun run sollong/index.ts >> logs/sollong.log 2>&1 &` 即可后台运行
+
+
 #### 每日签到
 
 本地生成助记词（最好是新的，避免安全风险）后配置到 `config.toml` 中，配置通过助记词派生的钱包数量 `wallet.count` 即需要刷的钱包数量。
 
-完成配置后执行 `bun run sollong/index.ts` 即可
-
 
 #### 刷邀请积分
+
+只刷邀请积分**可以不用提供助记词、私钥**
 
 把生成的邀请码，添加到配置文件 `config.toml` 中即可，会跟上面的签到一起执行
 
 #### 批量查询积分
 
-打开 `sollong/index.ts` 中的注释执行即可
+执行 `bun run sollong/util.ts` 即可
 
-```ts
-// 签到和刷邀请
-// main()
-
-// 批量查看积分
-queryPoints()
-```
 
 ## 项目说明
 
 | 名称 | 交互类型 | 成本 | 生态 | 备注 |
 | -- | -- | -- | -- | -- |
-| lava | rpc 节点调用 | 低 | | 签名的数据由 lava 后台指定，存在安全风险 |
+| lava | rpc 节点调用 | 低 | Cosmos | 签名的数据由 lava 后台指定，存在安全风险 |
 | frame | 智能合约交互 | 低 | | 需要领水 Sepolia、测试网 |
-| sollong | 邀请、签到 | 低 | | 需要钱包密钥签名 |
+| sollong | 邀请、签到 | 低 | SOL | 需要钱包密钥签名 |
 
 ## 开发说明
 
@@ -113,7 +115,7 @@ queryPoints()
 | ethers | eth 生态交互支持 | 签名、智能合约交互、交易 |
 | bip39 | 助记词生成 seed | 支持 HD 钱包 |
 | micro-ed25519-hdkey | HD 钱包派生 | 支持 HD 钱包 |
-| tweetnacl | sol 生态签名 | |
+| tweetnacl | 签名 | |
 | @solana/web3.js | sol 生态支持 | 当前只用到了 HD 钱包 |
 
 
