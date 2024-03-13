@@ -95,11 +95,13 @@ function getRandomInviteCode(): string {
 async function inviteTask() {
     const inviteCodes = config.invite.codes;
     const count = config.invite.count;
-    console.log(`开始刷邀请次数，共 [${inviteCodes.length}] 个邀请码，每个邀请码 [1~${count}] 次`)
+    console.log(`${nowDateTimeString()}开始刷邀请次数，共 [${inviteCodes.length}] 个邀请码，每个邀请码 [1~${count}] 次`)
     for (const code of inviteCodes) {
         const randomCount = parseInt(`${Math.random() * count + 1}`)
+        const wallet = HDWallet.generate()
         for (let i = 0; i < randomCount; i++) {
-            const inviteAddress = Keypair.generate().publicKey.toBase58()
+            const child = wallet.derive(i);
+            const inviteAddress = child.address;
             try {
                 const invited = await invite(inviteAddress, code)
                 if (invited) {
@@ -109,13 +111,15 @@ async function inviteTask() {
                 }
                 // 适当的等待
                 await sleepRandom()
+                // 邀请的帐号签到
+                await registerAndCheckIn(inviteAddress, child.key)
             } catch (e) {
                 console.error(`${nowDateTimeString()} ${code} 邀请 ${inviteAddress} 失败`, e)
             }
 
         }
     }
-
+    console.log(`${nowDateTimeString()} 邀请任务完成`)
 }
 
 /**
