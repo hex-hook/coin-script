@@ -9,8 +9,9 @@ interface UserInfo {
     inviteCode: string,
     totalPoints: number,
     checkInPoints: number,
-    invitePoints: number
-    assets?: number | string
+    invitePoints: number,
+    today: number,
+    assets?: number | string,
 }
 
 /**
@@ -33,7 +34,8 @@ async function home(address: string): Promise<UserInfo> {
         // 签到积分
         checkInPoints: json.data.broadband_points,
         // 邀请积分
-        invitePoints: json.data.invite_points
+        invitePoints: json.data.invite_points,
+        today: json.data.today_earnings,
     }
 }
 
