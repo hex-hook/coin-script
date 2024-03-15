@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
 import config from './config.toml'
+import { sleepRandom } from '../util/time'
 
 interface UserInfo {
     // rpc id
@@ -13,6 +14,8 @@ interface UserInfo {
     // 邀请码
     inviteCode?: string
 }
+
+const ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0"
 
 /**
  * 
@@ -34,8 +37,13 @@ async function login(address: string, inviteCode: string, process: 'token' | 've
         }),
         headers: {
             Cookie: cookie,
+            'User-Agent': ua
         }
     })
+    if (!resp.ok) {
+        console.log(`login failed: ${resp.status}, retry ...`)
+        throw new Error(`${address} login failed: ${resp.status}`)
+    }
     const res = await resp.json();
     const newCookie = resp.headers.getSetCookie() || [];
     if (res.success) {
@@ -51,6 +59,7 @@ async function login(address: string, inviteCode: string, process: 'token' | 've
  * @returns
  */
 async function generateRPC(wallet: ethers.Wallet | ethers.HDNodeWallet, inviteCode: string): Promise<[UserInfo, string]> {
+    console.log(`login ${wallet.address} ...`)
     const loginResult = await login(wallet.address, inviteCode, 'token');
     // 这里会进行一次签名，签名参数为 lava login 返回的 data，存在一定安全风险
     const signed = await wallet.signMessage(Buffer.from(loginResult[0]));
@@ -109,11 +118,16 @@ async function generateRPCs(count: number = 10) {
  */
 async function queryMe(wallet: ethers.Wallet | ethers.HDNodeWallet, inviteCode: string): Promise<UserInfo>{
     const [info, cookie] = await generateRPC(wallet, inviteCode);
+    console.log(`query ${wallet.address} information ...`)
     const resp = await fetch('https://points-api.lavanet.xyz/api/v1/users/me', {
         headers: {
             Cookie: cookie,
+            'User-Agent': ua
         }
     })
+    if (!resp.ok) {
+        throw new Error(`query ${wallet.address} info failed: ${resp.status}`)
+    }
     const res = await resp.json();
     const stats = res.stats
     info.points = stats.points.total_points;
@@ -153,6 +167,7 @@ async function queryMeByMnemonic(mnemonic: string, count: number, startIndex: nu
             const wallet = rootWallet.deriveChild(i);
             const item = await queryMe(wallet, inviteCode);
             res.push(item)
+            await sleepRandom()
         } catch (e) {
             console.error(e);
         }
