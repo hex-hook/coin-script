@@ -56,7 +56,7 @@ function main() {
 
 #### 刷积分
 
-lava net 的积分是通过调用 rpc 节点获得，使用 `lava/rpc.ts` 脚本，单个 rpc 节点会串行调用，如需单个节点并发，可在配置中配置两次
+lava net 的积分是通过调用 rpc 节点获得，使用 `lava/rpc.ts` 脚本，单个 rpc 节点会串行调用，脚本中分别会通过查询`钱包资产`和`代币资产`来刷积分
 
 1. 在 [lava](https://points.lavanet.xyz/) 获取 rpc 节点
 2. 将获取到的 rpc 节点配置到 `config.toml` 中
@@ -74,7 +74,7 @@ lava net 的积分是通过调用 rpc 节点获得，使用 `lava/rpc.ts` 脚本
 
 1. 将可用的、或者需要刷邀请积分的邀请码配置到 `config.toml` 中的 `inviteCodes`
 2. 将需要刷签到的钱包助记词配置到 `config.toml` 中的 `mnemonic`
-3. 完成配置后执行 `bun run sollong/index.ts >> logs/sollong.log 2>&1 &` 即可后台运行
+3. 完成配置后执行 `nohup bun run sollong/index.ts >> logs/sollong.log 2>&1 &` 即可后台运行
 
 
 #### 每日签到

@@ -18,7 +18,7 @@ interface UserInfo {
 const ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0"
 
 /**
- * 
+ * 登录
  * @param address 钱包地址
  * @param inviteCode 邀请码
  * @param process token 或者 verify，以 token 的方式获取到的 data 会用于签名，verify 后才能获得 rpc id
@@ -41,7 +41,7 @@ async function login(address: string, inviteCode: string, process: 'token' | 've
         }
     })
     if (!resp.ok) {
-        console.log(`login failed: ${resp.status}, retry ...`)
+        console.log(`login failed: ${resp.status}`)
         throw new Error(`${address} login failed: ${resp.status}`)
     }
     const res = await resp.json();
@@ -88,18 +88,18 @@ function getRandomInviteCode(): string {
  */
 async function generateRPCs(count: number = 10) {
     const mnemonic = ethers.Mnemonic.entropyToPhrase(ethers.randomBytes(32))
-    const wallet = ethers.HDNodeWallet.fromPhrase(mnemonic);
-    console.log(`wallet mnemonic: ${wallet.mnemonic?.phrase}`)
+    console.log(`wallet mnemonic: ${mnemonic}`)
     const res = []
     // 循环生成 rpc id，单个 HD 、单次循环不建议过多
     for (let i = 0; i < count; i++) {
-        const child = wallet.deriveChild(i);
+        // 改为兼容小狐狸的派生方式
+        const wallet = ethers.HDNodeWallet.fromPhrase(mnemonic, "", `m/44'/60'/0'/0/${i}`);
         const inviteCode = getRandomInviteCode();
         try {
-            const item = await generateRPC(child, inviteCode);
+            const item = await generateRPC(wallet, inviteCode);
             res.push(item[0]);
         } catch (e) {
-            console.error(e);
+            res.push({id: '', address: wallet.address})
         }
     }
     if (res.length > 0) {
@@ -142,17 +142,24 @@ async function queryMe(wallet: ethers.Wallet | ethers.HDNodeWallet, inviteCode: 
  * @param res 查询个人信息结果
  */
 function printResult(res: UserInfo[]) {
-    if (res.length > 0) {
-        console.table(res);
-        console.log(`将 ${res.map(item => "'" + item.id + "'").join(',')} 添加到 config.toml 中的 rpc 字段中`)
-        console.log(`邀请码 ${res.map(item => "'" + item.inviteCode + "'").join(',')} 添加到 config.toml 中的 inviteCodes 字段中`)
+    const failedResult = res.filter(item => '' === item.id);
+    const successResult = res.filter(item => '' !== item.id);
+    if (successResult.length > 0) {
+        console.table(successResult);
+        console.log(`将 ${successResult.map(item => "'" + item.id + "'").join(',')} 添加到 config.toml 中的 rpc 字段中`)
+        console.log(`邀请码 ${successResult.map(item => "'" + item.inviteCode + "'").join(',')} 添加到 config.toml 中的 inviteCodes 字段中`)
     } else {
         console.error('query failed')
+    }
+    if (failedResult.length > 0) {
+        console.error(`failed: ${failedResult.map(item => item.address).join(', ')}`)
     }
 }
 
 /**
  * 通过助记词查询积分信息
+ * 不兼容小狐狸的派生方式，当前派生方式为 m/44'/60'/0'/0/0 m/44'/60'/0'/0/0/0 m/44'/60'/0'/0/0/1 ...
+ * 如果需要使用小狐狸管理，则需要手动导入私钥
  * @param mnemonic 助记词，格式 "word1 word2 word3 ..."
  * @param count 派生的钱包数量，派生方式见 generateRPCs
  * @param startIndex 派生的钱包起始索引，默认 0，可以在同一个助记词基础上继续派生
@@ -162,19 +169,43 @@ async function queryMeByMnemonic(mnemonic: string, count: number, startIndex: nu
     const rootWallet = ethers.HDNodeWallet.fromPhrase(mnemonic);
     const end = startIndex + count;
     for (let i = startIndex; i < end; i++) {
+        const inviteCode = getRandomInviteCode();
+        const wallet = rootWallet.deriveChild(i);
         try {
-            const inviteCode = getRandomInviteCode();
-            const wallet = rootWallet.deriveChild(i);
             const item = await queryMe(wallet, inviteCode);
             res.push(item)
             await sleepRandom()
         } catch (e) {
-            console.error(e);
+            res.push({id: '', address: wallet.address})
         }
     }
     printResult(res);
 }
 
+
+/**
+ * 通过助记词查询积分信息（兼容小狐狸）
+ * 小狐狸的派生方式为 m/44'/60'/0'/0/0 m/44'/60'/0'/0/1 ...
+ * @param mnemonic 助记词，格式 "word1 word2 word3 ..."
+ * @param count 派生的钱包数量，派生方式见 generateRPCs
+ * @param startIndex 派生的钱包起始索引，默认 0，可以在同一个助记词基础上继续派生
+ */
+async function queryMeByMetamaskMnemonic(mnemonic: string, count: number, startIndex: number = 0) {
+    const res = []
+    const end = startIndex + count;
+    for (let i = startIndex; i < end; i++) {
+        const inviteCode = getRandomInviteCode();
+        const wallet = ethers.HDNodeWallet.fromPhrase(mnemonic, "", `m/44'/60'/0'/0/${i}`);
+        try {
+            const item = await queryMe(wallet, inviteCode);
+            res.push(item)
+            await sleepRandom()
+        } catch (e) {
+            res.push({id: '', address: wallet.address})
+        }
+    }
+    printResult(res);
+}
 
 /**
  * 通过私钥查询积分信息（建议使用 HD 钱包，方便管理，避免管理过多私钥）
@@ -199,6 +230,7 @@ async function queryMeByKeys(keys: string[]) {
  * 主函数，按需将下面执行的代码注释去掉(删除行首的 //)
  */
 function main() {
+    console.log('lava api 经常会失败，建议多次尝试，每次不一定都能得到完整的结果')
     // 生成 rpc id，日志中的助记词需要记录下来，仅用于生成 rpc id
     generateRPCs();
 
@@ -206,6 +238,8 @@ function main() {
     // 通过助记词查询积分信息，比上面的方法多调一个接口
     // queryMeByMnemonic('word1 word2 word3 ...', 10);
 
+    // 推荐这种方式，兼容小狐狸的派生方式
+    // queryMeByMetamaskMnemonic('word1 word2 word3 ...', 10);
 
     // 通过私钥查询积分信息，比上面的方法多调一个接口
     // queryMeByKeys(['0x...', '0x...']);
