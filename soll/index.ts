@@ -90,7 +90,7 @@ async function main() {
                 }
                 await sleepRandom()
                 const shareCode = await getShareCode(wallet.address)
-                if (shareCode) {
+                if (shareCode.length == 5) {
                     appendCodes.push(shareCode)
                 }
             } catch (e) {
