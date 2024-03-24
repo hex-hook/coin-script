@@ -15,6 +15,8 @@
       - [邀请码邀请的帐号刷积分](#邀请码邀请的帐号刷积分)
       - [批量查询积分与 SOL 资产](#批量查询积分与-sol-资产)
     - [spepe](#spepe)
+    - [soll](#soll)
+    - [grass](#grass)
   - [项目说明](#项目说明)
   - [开发说明](#开发说明)
     - [依赖项说明](#依赖项说明)
@@ -103,22 +105,42 @@ lava net 的积分是通过调用 rpc 节点获得，使用 `lava/rpc.ts` 脚本
 ### spepe
 
 直接用 sol 钱包登记即可，邀请码可以邀请 20 个再获得 20 份奖励。
-执行时，会分别从 `spepe/config.tom` 和 `spepe/data.json` 中获取邀请码，并让每个邀请码邀请 20 次。`spepe/config.toml` 文件中至少要配置一个可用的邀请码
+执行时，会分别从 `spepe/config.toml` 和 `spepe/data.json` 中获取邀请码，并让每个邀请码邀请 20 次。`spepe/config.toml` 文件中至少要配置一个可用的邀请码
 
 由于不确定邀请码总共只能邀请 20 次，先存到文件中
 
 1. 执行 `nohup bun run spepe/index.ts >> logs/spepe.log 2>&1 &`
 2. 执行完成后会把新的助记词和邀请码保存到 `spepe/data.json` 文件中
 
+### soll
+
+登记钱包地址即可，站点代码和 `spepe` 差不多，估计是同一个项目方。募集的钱包地址里面已经有了**500+** SOL，且站点还没有加人机验证，可以先刷。
+
+1. 先在 [soll.cc](https://soll.cc) 登记一个钱包，然后把邀请码复制到 `soll/config.toml` 中
+2. 执行 `bun run soll/index.ts`，每个邀请码会邀请 5~15 个钱包，并将最终的用到的助记词和最新可用的邀请码放到 `soll/data.json` 中
+
+每次执行登记的地址数量为，`soll/config.toml` 配置的邀请码数 * 随机邀请数（5~15），如 `soll/data.json` 中存在邀请码，则以这个为准。
+
+> 单个 ip 不建议过多，否则容易被女巫
+
+### grass
+
+在本地获取到 `userId` 后配置到配置文件 `config.toml` 中，执行 `nohup bun run grass/index.ts >> logs/grass.log 2>&1 &` 即可
+
+从插件源码中获悉，当前挖矿的逻辑基本上为保持 `WebSocket` 在线即可。
+核心挖矿逻辑为，将通过 `WebSocket` 分发指定报文信息中的 `base64` 字符串转为 `Blob`（二进制）调用指定 `url` 请求。（当前未见分发过该类型报文）
 
 
 ## 项目说明
 
-| 名称 | 交互类型 | 成本 | 生态 | 备注 |
-| -- | -- | -- | -- | -- |
-| lava | rpc 节点调用 | 低 | Cosmos | 签名的数据由 lava 后台指定，存在安全风险 |
-| frame | 智能合约交互 | 低 | | 需要领水 Sepolia、测试网 |
-| sollong | 邀请、签到 | 低 | SOL | 需要钱包密钥签名 |
+| 名称 | 交互类型 | 成本 | 生态 | 备注 | 进度 |
+| -- | -- | -- | -- | -- | -- |
+| lava | rpc 节点调用 | 低 | Cosmos | 签名的数据由 lava 后台指定，存在安全风险 | 官方开始封 ip，无法正常刷|
+| frame | 智能合约交互 | 低 | | 需要领水 Sepolia、测试网 | 据说项目已经失败 |
+| sollong | 邀请、签到 | 低 | SOL | 需要钱包密钥签名 | |
+| grass | 挖矿 | 中 | | 按公网 ip 计算，云服务器 ip 无积分 | 4.9 第三期挖矿结束 |
+| spepe | 登记钱包地址 | 低 | SOL | 脚本失效，官网加了人机检查 | 未按计划发币，被女巫|
+| soll | 登记钱包地址 | 低 | SOL | 募集到了一些 SOL，可能有空投（疑似 spepe 同一项目方）| |
 
 ## 开发说明
 
