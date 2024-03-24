@@ -70,12 +70,11 @@ async function main() {
         return
     }
 
-    const root = HDWallet.generate()
     const appendCodes = []
     const mnemonicData: MnemonicData[] = data.mnemonic || []
-    for (let i = 0; i < codes.length; i++) {
+    for (const code of codes) {
+        const root = HDWallet.generate()
         let success = 0
-        const code = codes[i]
         const times = parseInt(`${Math.random() * 10 + 5}`)
         let walletIndex = 0
         for (let j = 0; j < times; j++) {
@@ -108,7 +107,7 @@ async function main() {
         console.log(`${nowDateTimeString()} wallet write data.json success`)
     } catch (e) {
         console.error('write data.json failed', e)
-        console.log(`mnemonic: ${root.mnemonic}\ncodes: ${appendCodes.join(',')}`)
+        console.log(`mnemonic: ${mnemonicData}\ncodes: ${appendCodes.join(',')}`)
     }
 }
 
