@@ -238,8 +238,6 @@ async function runTask() {
         // 随机等待 2-30 分钟
         await sleepRandom(1000 * 60 * 2, 1000 * 60 * 30)
     }
-    await task(0)
-
 }
 
 async function main() {
