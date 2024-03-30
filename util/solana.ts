@@ -10,6 +10,7 @@ export class HDWallet {
     readonly path: string;
     readonly address: string;
     readonly key: string;
+    readonly keypair: Keypair;
 
     constructor(mnemonic: string, path?: string) {
         this.mnemonic = mnemonic;
@@ -22,6 +23,7 @@ export class HDWallet {
         const keypair = Keypair.fromSeed(hd.derive(path, true).privateKey);
         this.address = keypair.publicKey.toBase58();
         this.key = ethers.encodeBase58(keypair.secretKey)
+        this.keypair = keypair;
     }
 
     /**

@@ -3,16 +3,21 @@
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/uuid": "^9.0.8"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@metaplex-foundation/js": "^0.20.1",
+    "@solana/spl-token": "^0.4.3",
+    "@solana/spl-token-metadata": "^0.1.2",
     "@solana/web3.js": "^1.91.0",
     "bip39": "^3.1.0",
     "ethers": "^6.11.1",
     "micro-ed25519-hdkey": "^0.1.2",
-    "tweetnacl": "^1.0.3"
+    "tweetnacl": "^1.0.3",
+    "uuid": "^9.0.1"
   }
 }
