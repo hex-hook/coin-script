@@ -14,6 +14,10 @@
       - [刷邀请积分](#刷邀请积分)
       - [邀请码邀请的帐号刷积分](#邀请码邀请的帐号刷积分)
       - [批量查询积分与 SOL 资产](#批量查询积分与-sol-资产)
+    - [eclipse](#eclipse)
+      - [跨链交互](#跨链交互)
+    - [代币交互](#代币交互)
+    - [invariant 交互 (官方)](#invariant-交互-官方)
     - [spepe](#spepe)
     - [soll](#soll)
     - [grass](#grass)
@@ -27,6 +31,7 @@
 
 1. 安装 `bun`(nodejs 运行时)，已经有 nodejs 环境的可以使用 `npm i -g bun` 安装，否则使用 `curl -fsSL https://bun.sh/install | bash` 下载安装
 2. 安装依赖 `bun install`， ~~当前只依赖了 `ethers`，**为降低安全风险不建议再使用其他依赖**~~，依赖项说明见下方[依赖项说明](#依赖项说明)
+3. 每次依赖更新请先使用 `bun install` 安装依赖
 
 > 如不使用 bun，也可以把 ts 文件中的代码转为 js 代码使用
 
@@ -101,6 +106,33 @@ lava net 的积分是通过调用 rpc 节点获得，使用 `lava/rpc.ts` 脚本
 
 执行 `bun run sollong/util.ts` 即可
 
+### eclipse
+
+solana 生态的 L2，测试网激励
+
+先将本地生成的助记词(优先使用新的)配置到配置文件中，然后执行 `bun run eclipse/util.ts` 查询需要领水的地址(sepolia)
+
+#### 跨链交互
+
+从 sepolia 跨链到 eclipse testnet，需要从 sepolia 领水，很多水龙头都限制了只给主网有 ETH 资产的地址
+
+执行脚本 `nohup bun run eclipse/bridge.ts >> logs/eclipse-bridge.log 2>&1 &`
+
+
+### 代币交互
+
+- 创建代币
+- 铸造代币
+- 发送代币
+
+执行脚本 `nohup bun run eclipse/token.ts >> logs/eclipse-token.log 2>&1 &`
+
+### invariant 交互 (官方)
+
+待开发
+
+- 领水
+- swap
 
 ### spepe
 
@@ -158,6 +190,10 @@ lava net 的积分是通过调用 rpc 节点获得，使用 `lava/rpc.ts` 脚本
 | micro-ed25519-hdkey | HD 钱包派生 | 支持 HD 钱包 |
 | tweetnacl | 签名 | |
 | @solana/web3.js | sol 生态支持 | 当前只用到了 HD 钱包 |
+| @solana/spl-token-metadata | sol 代币创建 | |
+| @solana/spl-token | sol 代币交互 | |
+| @metaplex-foundation/js | sol NFT 交互 | |
+
 
 
 

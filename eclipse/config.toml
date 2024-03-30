@@ -1,0 +1,21 @@
+[sepolia]
+rpc = 'https://rpc.ankr.com/eth_sepolia/'
+# gas fee ETH
+gas = '0.00012'
+
+[wallet]
+# 通过 mnemonic 生成的钱包地址，优先使用新钱包，注意环境安全
+mnemonic = 'word1 word2 ...'
+# 用于交互的钱包数量，需要先领水才能正常交互，通过 util 查询需要领水的地址
+count = 10
+# 当前 eclipse 资产超过 skipBalance 时，不再从 sepolia 跨链
+skipBalance = 0.1
+
+[eclipse]
+rpc = 'https://testnet.dev.eclipsenetwork.xyz'
+
+# testnet backup
+# rpc = 'https://testnet.dev2.eclipsenetwork.xyz'
+
+# devnet, 可以用来测试，可以通过 airdrop 获取测试币
+# rpc = 'https://staging-rpc.dev.eclipsenetwork.xyz'
