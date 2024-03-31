@@ -134,7 +134,7 @@ async function runTokenFaucetTask() {
     console.log(`${nowDateTimeString()} [invariant token faucet] start task, total: ${indexList.length}, index: [${indexList}]`)
     for (const index of indexList) {
         try {
-            await faucetTask(index)
+            await mintToken(index)
         } catch (e) {
             console.error(`${nowDateTimeString()} [invariant token faucet] task error, wallet index: [${index}]`, e)
         }
