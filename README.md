@@ -129,7 +129,9 @@ solana 生态的 L2，测试网激励
 
 ### invariant 交互 (官方)
 
-领取 eclipse 的水，和批量领取 USDT, BTC, ETH 的水，swap 的交互还未开发
+- 领 sol 水
+- 领 USDC, BTC, ETH 水
+- swap
 
 `nohup bun run eclipse/invariant.ts >> logs/eclipse-invariant.log 2>&1 &`
 
@@ -192,6 +194,7 @@ solana 生态的 L2，测试网激励
 | @solana/spl-token-metadata | sol 代币创建 | |
 | @solana/spl-token | sol 代币交互 | |
 | @metaplex-foundation/js | sol NFT 交互 | |
+| @project-serum/anchor | sol 智能合约交互 | |
 
 
 
