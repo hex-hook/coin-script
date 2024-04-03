@@ -6,8 +6,13 @@ gas = '0.00012'
 [wallet]
 # 通过 mnemonic 生成的钱包地址，优先使用新钱包，注意环境安全
 mnemonic = 'word1 word2 ...'
-# 用于交互的钱包数量，需要先领水才能正常交互，通过 util 查询需要领水的地址
+
+# 用于跨链、发行代币的交互的钱包数量，需要 sepolia 的水，门槛略高，根据实际情况调整
 count = 10
+
+# 用于 invariant 的钱包数量，不需要 sepolia 的水，太多了可能会被封，根据实际情况调整
+invariantCount = 1000
+
 # 当前 eclipse 资产超过 skipBalance 时，不再从 sepolia 跨链
 skipBalance = 0.1
 
