@@ -2,7 +2,7 @@ import { ComputeBudgetProgram, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey,
 import config from './config.toml'
 import { HDWallet } from '../util/solana'
 import { randomElement, randomIndexList, randomInt, shuffle } from '../util/random'
-import { nowDateTimeString, sleepRandom } from '../util/time'
+import { nowDateTimeString, sleepRandom, getSleepScope } from '../util/time'
 import { TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createMintToInstruction, getAssociatedTokenAddress } from '@solana/spl-token'
 import { BN, Program, type Idl, web3, AnchorProvider, Wallet } from '@project-serum/anchor'
 import InvariantIdl from './invariant_idl.json'
@@ -256,8 +256,9 @@ async function swap(index: number) {
  * 运行 token 领水任务，领 ETH, USDC, BTC
  */
 async function runTokenFaucetTask() {
-    const indexList = randomIndexList(config.wallet.count).splice(0, Math.floor(config.wallet.count * (randomInt(3, 10)/ 10)))
+    const indexList = randomIndexList(config.wallet.invariantCount).splice(0, Math.floor(config.wallet.invariantCount * (randomInt(3, 10)/ 10)))
     console.log(`${nowDateTimeString()} [invariant token faucet] start task, total: ${indexList.length}, index: [${indexList}]`)
+    const [start, end] = getSleepScope(indexList.length)
     for (const index of indexList) {
         try {
             await mintToken(index)
@@ -265,8 +266,7 @@ async function runTokenFaucetTask() {
             console.error(`${nowDateTimeString()} [invariant token faucet] task error, wallet index: [${index}]`, e)
             continue
         }
-        // 随机等待 2-60 分钟
-        await sleepRandom(1000 * 60 * 2, 1000 * 60 * 60)
+        await sleepRandom(start, end)
     }
 }
 
@@ -274,8 +274,11 @@ async function runTokenFaucetTask() {
  * 运行 SOL 领水任务
  */
 async function runFaucetTask() {
-    const indexList = randomIndexList(config.wallet.count).splice(0, Math.floor(config.wallet.count / (randomInt(3, 10)/ 10)))
-    console.log(`${nowDateTimeString()} [invariant faucet] start task, total: ${indexList.length}, index: [${indexList}]`)
+    const indexList = randomIndexList(config.wallet.invariantCount).splice(0, Math.floor(config.wallet.invariantCount / (randomInt(3, 10)/ 10)))
+    // 如果都是新账户，可以先执行领水任务，避免其他任务失败
+    // const indexList = Array.from({ length: config.wallet.invariantCount }).map((_, index) => index)
+    console.log(`${nowDateTimeString()} [invariant faucet] start task, total: ${indexList.length}`)
+    const [start, end] = getSleepScope(indexList.length)
     for (const index of indexList) {
         try {
             await faucetTask(index)
@@ -283,8 +286,8 @@ async function runFaucetTask() {
             console.error(`${nowDateTimeString()} [invariant faucet] task error, wallet index: [${index}]`, e)
             continue
         }
-        // 随机等待 2-60 分钟
-        await sleepRandom(1000 * 60 * 2, 1000 * 60 * 60)
+        // 交互间隔
+        await sleepRandom(start, end)
     }
 }
 
@@ -292,8 +295,9 @@ async function runFaucetTask() {
  * 运行 swap 交互任务
  */
 async function runSwapTask() {
-    const indexList = randomIndexList(config.wallet.count).splice(0, Math.floor(config.wallet.count / (randomInt(3, 10)/ 10)))
+    const indexList = randomIndexList(config.wallet.invariantCount).splice(0, Math.floor(config.wallet.invariantCount / (randomInt(3, 10)/ 10)))
     console.log(`${nowDateTimeString()} [invariant swap] start task, total: ${indexList.length}, index: [${indexList}]`)
+    const [start, end] = getSleepScope(indexList.length)
     for (const index of indexList) {
         try {
             await swap(index)
@@ -302,7 +306,7 @@ async function runSwapTask() {
             continue
         }
         // 随机等待 2-10 分钟
-        await sleepRandom(1000 * 60 * 2, 1000 * 60 * 10)
+        await sleepRandom(start, end)
     }
 }
 
