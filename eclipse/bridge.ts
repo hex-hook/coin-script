@@ -115,6 +115,8 @@ export async function task(index: number) {
     const amount = await getRandomETH(provider, wallet.address)
     if (amount > 0) {
         await depositToEtherBridge(wallet, solanaWallet.address, amount)
+    } else {
+        console.log(`${nowDateTimeString()} [Sepolia] Address: [${wallet.address}] balance is not enough, skip deposit`)
     }
 }
 
