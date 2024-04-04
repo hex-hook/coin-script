@@ -84,13 +84,22 @@ const SWAP_PROGRAM_AUTHORITY = 'Gq23SQPmXi1KB2pzxc5ezZdRqamswWcddEMx7vcAvcmv'
 /**
  * 领水
  * @param index 钱包索引
+ * @param checked 是否检查过余额，检查过则不再检查
  */
-async function faucetTask(index: number) {
-    const connection = new Connection(config.eclipse.rpc)
+async function faucetTask(index: number, checked: boolean = false) {
+    const connection = new Connection(config.eclipse.rpc, 'confirmed')
     const mnemonic = config.wallet.mnemonic
+    const target = new HDWallet(mnemonic, `m/44'/501'/${index}'/0`).keypair.publicKey
+    if (!checked) {
+        const balance = await connection.getBalance(target)
+        // 保持 4 次领水的余额足够交互，过多会被判断为女巫
+        if (balance > LAMPORTS_PER_SOL * 0.0001) {
+            console.log(`${nowDateTimeString()} [invariant faucet] balance is enough, wallet index: [${index}], skip faucet`)
+            return
+        }
+    }
     // 固定金额，避免被判断为女巫，调太大了官方可能会换钱包，不要把钱包的钱转走！
     const lamportsToSend = LAMPORTS_PER_SOL * 0.00003;
-    const target = new HDWallet(mnemonic, `m/44'/501'/${index}'/0`).keypair.publicKey
     const transferTransaction = new Transaction().add(
         SystemProgram.transfer({
             fromPubkey: invariantPayer.publicKey,
@@ -105,15 +114,16 @@ async function faucetTask(index: number) {
     console.log(`${nowDateTimeString()} [invariant faucet] faucet success, wallet index: [${index}], target: ${target.toBase58()}`)
 }
 
-
 /**
  * 检查并创建 token 账户
+ * 创建时需要  5e-8 fee + 3 * 0.00001992 的租金，即 0.00005981 SOL，经测试 2次仍不能交互，需要领 3 次水才能创建成功
  * @param index 钱包索引
+ * @param balance 钱包余额
  * @returns 
  */
-async function checkAndCreateTokenAccount(index: number): Promise<PublicKey[]> {
+async function checkAndCreateTokenAccount(index: number, balance: number): Promise<PublicKey[]> {
     const keypair = new HDWallet(config.wallet.mnemonic, `m/44'/501'/${index}'/0`).keypair
-    const connection = new Connection(config.eclipse.rpc)
+    const connection = new Connection(config.eclipse.rpc, 'confirmed')
     const { value } = await connection.getParsedTokenAccountsByOwner(keypair.publicKey, { programId: TOKEN_PROGRAM_ID })
     const needCreateAccounts = []
     if (value === null || value.length === 0) {
@@ -129,6 +139,15 @@ async function checkAndCreateTokenAccount(index: number): Promise<PublicKey[]> {
             return FAUCET_INFO_LIST.map(item => value.find((account: any) => account.account.data.parsed.info.mint == item.mint.toBase58()).pubkey)
         }
         needCreateAccounts.push(...res)
+    }
+    if (balance <= LAMPORTS_PER_SOL * 0.00006) {
+        console.info(`${nowDateTimeString()} [invariant faucet] balance not enough, need faucet, wallet index: [${index}]`)
+        await faucetTask(index, true)
+        await sleepRandom(1000 * 10, 1000 * 100)
+    }
+    if (balance <= LAMPORTS_PER_SOL * 0.00003) {
+        await faucetTask(index, true)
+        await sleepRandom(1000 * 10, 1000 * 100)
     }
     const ataList = []
     const tx = new Transaction()
@@ -149,20 +168,30 @@ async function checkAndCreateTokenAccount(index: number): Promise<PublicKey[]> {
     const sig = await sendAndConfirmTransaction(connection, tx, [keypair])
     console.log(`${nowDateTimeString()} [invariant faucet] create token account success, wallet index: [${index}], sig: ${sig}`)
     console.log(`create token account: ${ataList.map((ata) => ata.toBase58())}`)
-    // 创建成功等待 2 ~ 5 分钟再领水
-    await sleepRandom(1000 * 60 * 2, 1000 * 60 * 5)
+    // 创建成功等待 10s ~ 60s 再领水
+    await sleepRandom(1000 * 10, 1000 * 60)
     return ataList
 }
-
+/**
+ * 为目标地址铸造代币 USDC, BTC, ETH
+ * fee 1e-7
+ * @param index 钱包索引
+ * @returns 
+ */
 async function mintToken(index: number) {
-    const ataList = await checkAndCreateTokenAccount(index)
+    const keypair = new HDWallet(config.wallet.mnemonic, `m/44'/501'/${index}'/0`).keypair
+    const connection = new Connection(config.eclipse.rpc)
+    const balance = await connection.getBalance(keypair.publicKey)
+    if (balance < LAMPORTS_PER_SOL * 1e-6) {
+        await faucetTask(index, true)
+        return
+    }
+    const ataList = await checkAndCreateTokenAccount(index, balance)
     if (ataList.length != FAUCET_INFO_LIST.length) {
         console.error(`${nowDateTimeString()} [invariant faucet] mint token error, token account failed wallet index: [${index}]`)
         return
     }
-    const keypair = new HDWallet(config.wallet.mnemonic, `m/44'/501'/${index}'/0`).keypair
     console.log(`${nowDateTimeString()} [invariant faucet] mint token, wallet index: [${index}] [${keypair.publicKey.toBase58()}]`)
-    const connection = new Connection(config.eclipse.rpc)
     const tx = new Transaction()
     for (let i = 0; i < FAUCET_INFO_LIST.length; i++) {
         const mintInfo = FAUCET_INFO_LIST[i]
@@ -183,13 +212,20 @@ async function mintToken(index: number) {
 }
 
 /**
- * 代币见的兑换
+ * 代币间的兑换
+ * fee 5e-8
  * @param index 钱包索引
  * @returns 
  */
 async function swap(index: number) {
     const keypair = new HDWallet(config.wallet.mnemonic, `m/44'/501'/${index}'/0`).keypair
     const connection = new Connection(config.eclipse.rpc)
+    const balance = await connection.getBalance(keypair.publicKey)
+    // 不够手续费了，下次再交互
+    if (balance < LAMPORTS_PER_SOL * 1e-7) {
+        await faucetTask(index)
+    }
+
     const [from, to] = shuffle(FAUCET_INFO_LIST).slice(0, 2)
   
     const tokenAccounts = await connection.getParsedTokenAccountsByOwner(keypair.publicKey, { programId: TOKEN_PROGRAM_ID })
