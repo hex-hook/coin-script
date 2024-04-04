@@ -5,7 +5,7 @@ import { Connection, PublicKey, Keypair, Transaction, SystemProgram, sendAndConf
 import { ExtensionType, LENGTH_SIZE, TOKEN_2022_PROGRAM_ID, TYPE_SIZE, createAssociatedTokenAccountInstruction, createInitializeMetadataPointerInstruction, createInitializeMintInstruction, createMintToInstruction, createTransferCheckedInstruction, getAssociatedTokenAddress, getMint, getMintLen } from '@solana/spl-token'
 import { randomElement, randomIndexList, randomInt } from '../util/random'
 import { createInitializeInstruction, pack, type TokenMetadata } from '@solana/spl-token-metadata'
-
+import tokenData from './token.json'
 
 
 /**
@@ -15,13 +15,13 @@ import { createInitializeInstruction, pack, type TokenMetadata } from '@solana/s
 async function createToken(payer: Keypair): Promise<PublicKey> {
     const mint = Keypair.generate()
     const decimals = randomInt(9, 16)
-    // TODO 从 solana 主网获取一些主流代币的来生成
+    const tokenInfo = randomElement(tokenData)
     const metadata: TokenMetadata = {
         mint: mint.publicKey,
-        name: `Eclipse Builder ${payer.publicKey.toBase58().substring(0, 5)}`,
-        symbol: `EB ${mint.publicKey.toBase58().substring(0, 2)}-${randomInt(100, 999)}`,
-        uri: 'https://docs.eclipse.xyz/',
-        additionalMetadata: [['builder', 'test']]
+        name: tokenInfo.name,
+        symbol: tokenInfo.symbol,
+        uri: `https://docs.eclipse.xyz/${tokenInfo.symbol}`,
+        additionalMetadata: []
     }
     const mintLen = getMintLen([ExtensionType.MetadataPointer])
     const connection = new Connection(config.eclipse.rpc, 'confirmed')
@@ -212,7 +212,7 @@ async function task(index: number) {
     try {
         await mintToken(payer, new PublicKey(token.account.data.parsed.info.mint), new PublicKey(targetAddress))
     } catch (error) {
-        console.error(`${nowDateTimeString()} [eclipse] Address: [${wallet.address}] mint token error: ${error}`)
+        console.error(`${nowDateTimeString()} [eclipse] Address: [${wallet.address}] mint token [${token.account.data.parsed.info.mint}] to [${targetAddress}] error: ${error}`)
     }
 
     // 3. 随机给一个子账户发送 token
