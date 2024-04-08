@@ -1,0 +1,9 @@
+ws = 'wss://rpc-testnet.avail.tools/ws'
+# ws = 'wss://goldberg.avail.tools/ws'
+
+[wallet]
+mnemonic = 'word1 word2 ...'
+# 水龙头的助记词
+faucetMnemonic = 'word1 word2 ...'
+
+lastIndex = 0
