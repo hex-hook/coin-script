@@ -8,6 +8,7 @@
   - [lava](#lava)
   - [sollong](#sollong)
   - [eclipse](#eclipse)
+  - [avail](#avail)
   - [spepe](#spepe)
   - [soll](#soll)
   - [grass](#grass)
@@ -18,11 +19,12 @@
 
 | 名称 | 交互类型 | 成本 | 生态 | 备注 | 进度 |
 | -- | -- | -- | -- | -- | -- |
+| avail :ok_hand: | 铸造 NFT | 低 | polkadot | 先领水 | |
 | eclipse :ok_hand: | 铸造、转账、兑换、跨链 | 低 | SOL | 不要把水领完!| |
 | lava :hear_no_evil: | rpc 节点调用 | 低 | Cosmos | 签名的数据由 lava 后台指定，存在安全风险 | 官方开始封 ip，无法正常刷 |
 | frame :warning: | 智能合约交互 | 低 | | 需要领水 Sepolia、测试网 | 据说项目已经失败 |
 | sollong :hear_no_evil: | 邀请、签到 | 低 | SOL | 加入了验证码，无法正常签到 | |
-| grass | 挖矿 | 中 | | 按公网 ip 计算，云服务器 ip 无积分 | 4.9 第三期挖矿结束 |
+| grass :hear_no_evil: | 挖矿 | 中 | | 按公网 ip 计算，云服务器 ip 无积分 | 4.9 第三期挖矿结束 |
 | spepe :poop: | 登记钱包地址 | 低 | SOL | 脚本失效，官网加了人机检查 | 未按计划发币 |
 | soll :poop: | 登记钱包地址 | 低 | SOL | 募集到了一些 SOL，可能有空投（疑似 spepe 同一项目方）| 未按计划发币 |
 
@@ -159,6 +161,24 @@ solana 生态的 L2，测试网激励
 
 </details>
 
+### avail
+
+polkadot 生态，测试网任务，完成任务后铸造 NFT
+
+先将本地生成的助记词和水龙头的助记词配置到配置文件中
+<details><summary>交互说明</summary>
+
+<!-- omit in toc -->
+#### AVL 分发
+
+执行 `bun run avail/transfer.ts` 脚本分发 `AVL` 用于 NFT 铸造，单次 mint 需要准备 `0.02 AVL`，脚本会根据水龙头的资产进行分发，也可以修改脚本中的值来跳转分发的钱包数
+
+<!-- omit in toc -->
+#### NFT 铸造
+
+执行 `bun run avail/nft.ts` 脚本铸造 NFT，每次铸造前会先检查资产是否 `>= 0.02` ，如果小于则跳过
+</details>
+
 ### spepe
 
 直接用 sol 钱包登记即可，邀请码可以邀请 20 个再获得 20 份奖励。
@@ -206,6 +226,10 @@ solana 生态的 L2，测试网激励
 | @solana/spl-token | sol 代币交互 | |
 | @metaplex-foundation/js | sol NFT 交互 | |
 | @project-serum/anchor | sol 智能合约交互 | |
+| @polkadot/api | polkadot 生态链上交互 | |
+| @polkadot/keyring | polkadot 生态账户钱包处理 | | 
+| @polkadot/util-crypto | polkadot 密码学相关 | |
+| bn.js | 科学计数 | |
 
 
 
