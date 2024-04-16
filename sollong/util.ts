@@ -113,7 +113,7 @@ async function queryPoints(showBalance = false) {
  */
 async function queryRanks() {
     const wallet = new HDWallet(config.wallet.mnemonic);
-    const count = 60;
+    const count = config.wallet.count;
     const res = []
     for (let i = 0; i < count; i++) {
         const child = wallet.derive(i);
