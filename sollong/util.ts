@@ -14,6 +14,13 @@ interface UserInfo {
     assets?: number | string,
 }
 
+interface RankInfo {
+    address: string,
+    level: string,
+    points: number,
+    rank: string,
+}
+
 /**
  * 查询当前积分信息
  * @param address 地址
@@ -36,6 +43,20 @@ async function home(address: string): Promise<UserInfo> {
         // 邀请积分
         invitePoints: json.data.invite_points,
         today: json.data.today_earnings,
+    }
+}
+
+async function queryRank(address: string): Promise<RankInfo> {
+    const resp = await fetch(`${URL_PREFIX}/new_home?address=${address}`);
+    const json = await resp.json();
+    if (json.code != 200) {
+        throw new Error(json.msg)
+    }
+    return {
+        address,
+        level: json.data.level,
+        points: json.data.points,
+        rank: json.data.rank,
     }
 }
 
@@ -87,8 +108,28 @@ async function queryPoints(showBalance = false) {
     console.log(`添加助记词到配置文件中，可刷邀请积分，${res.map(item => "'" + item?.inviteCode + "'").join(',')}`)
 }
 
+/**
+ * 批量查询排名
+ */
+async function queryRanks() {
+    const wallet = new HDWallet(config.wallet.mnemonic);
+    const count = 60;
+    const res = []
+    for (let i = 0; i < count; i++) {
+        const child = wallet.derive(i);
+        const item = await queryRank(child.address).catch(e => {
+            console.error(`查询失败: ${child.address}`, e.message)
+            return null
+        })
+        if (item == null) continue
+        res.push(item)
+    }
+    console.table(res)
+}
+
 // 批量查看积分
 // queryPoints()
 
 // 批量查看钱包积分和对应的 sol 资产，rpc 节点限流，串行调用，比较慢
-queryPoints(true)
+// queryPoints(true)
+queryRanks()
