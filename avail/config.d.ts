@@ -1,5 +1,5 @@
-declare module '*config.toml' {
-    export type Config = {
+declare module '@/avail/config.toml' {
+    type Config = {
         /**
          * avail rpc 节点
          */
@@ -16,4 +16,7 @@ declare module '*config.toml' {
             lastIndex: number
         }
     }
+
+    const config: Config;
+    export default config;
 }
