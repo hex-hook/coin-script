@@ -1,5 +1,5 @@
 import { ComputeBudgetProgram, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction } from '@solana/web3.js'
-import config from './config.toml'
+import config from '@/eclipse/config.toml'
 import { HDWallet } from '../util/solana'
 import { randomElement, randomIndexList, randomInt, shuffle } from '../util/random'
 import { nowDateTimeString, sleepRandom, getSleepScope } from '../util/time'
@@ -136,7 +136,7 @@ async function checkAndCreateTokenAccount(index: number, balance: number): Promi
         if (res.length == 0) {
             console.log(`${nowDateTimeString()} [invariant faucet] token account exists, wallet index: [${index}]`)
             // 顺序不能变
-            return FAUCET_INFO_LIST.map(item => value.find((account: any) => account.account.data.parsed.info.mint == item.mint.toBase58()).pubkey)
+            return FAUCET_INFO_LIST.map(item => value.find((account: any) => account.account.data.parsed.info.mint == item.mint.toBase58())!.pubkey)
         }
         needCreateAccounts.push(...res)
     }

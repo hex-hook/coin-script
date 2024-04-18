@@ -1,4 +1,4 @@
-import config from './config.toml'
+import config from '@/eclipse/config.toml'
 import { nowDateTimeString, sleepRandom } from "../util/time";
 import { HDWallet } from '../util/solana'
 import { Connection, PublicKey, Keypair, Transaction, SystemProgram, sendAndConfirmTransaction, type ParsedAccountData, type AccountInfo, LAMPORTS_PER_SOL } from "@solana/web3.js";

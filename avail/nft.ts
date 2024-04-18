@@ -1,6 +1,6 @@
 // import { waitReady } from "@polkadot/wasm-crypto";
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
-import config from './config.toml'
+import config from '@/avail/config.toml'
 import type { KeyringPair } from "@polkadot/keyring/types";
 import { nowDateTimeString, sleepRandom } from "../util/time";
 import { v4 } from "uuid";
@@ -28,7 +28,7 @@ async function init(): Promise<ApiPromise> {
 }
 
 async function mintNFT(api: ApiPromise, keypair: KeyringPair): Promise<boolean> {
-    const { data } = await api.query.system.account(keypair.address)
+    const { data } = (await api.query.system.account(keypair.address)) as unknown as { data: any };
     if (data.free.lt(minBalance)) {
         console.warn(`${nowDateTimeString()} [${keypair.address}] free balance not enough`)
         return false
