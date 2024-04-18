@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import config from './config.toml'
+import config from '@/eclipse/config.toml'
 
 /**
  * 查询配置中对应的钱包地址的 sepolia ETH 余额

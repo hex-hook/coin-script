@@ -1,5 +1,5 @@
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api'
-import config from './config.toml'
+import config from '@/avail/config.toml'
 import { types } from './spec/types'
 import { rpc } from './spec/rpc'
 import { signedExtensions } from './spec/signedExtensions'
@@ -34,7 +34,7 @@ async function main() {
     // 0.02
     const amount = factor.divn(50)
     const faucet = new Keyring({ type: 'sr25519' }).createFromUri(faucetMnemonic)
-    const { data: totalBalance } = await api.query.system.account(faucet.address)
+    const { data: totalBalance } = (await api.query.system.account(faucet.address)) as unknown as { data: any };
     // 计算资产够分发的数量(未考虑磨损，实际上会少一些)
     const total = totalBalance.free.div(amount).toNumber()
     console.log(`faucet total balance: ${totalBalance.free.toString()} send amount: 0.02 * ${total}`)

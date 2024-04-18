@@ -1,4 +1,4 @@
-declare module '*config.toml' {
+declare module '@/eclipse/config.toml' {
     export type Config = {
         sepolia: {
             /**
