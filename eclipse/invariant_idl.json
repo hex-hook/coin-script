@@ -503,6 +503,23 @@
             }
           ]
         }
+      },
+      {
+        "name": "tickmap",
+        "type": {
+          "kind":"struct",
+          "fields": [
+            {
+              "name": "bitmap",
+              "type": {
+                "array": [
+                  "u8",
+                  11091
+                ]
+              }
+            }
+          ]
+        }
       }
     ],
     "errors": [
