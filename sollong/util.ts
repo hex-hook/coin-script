@@ -1,6 +1,8 @@
 import { HDWallet } from '../util/solana'
 import config from './config.toml'
-import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, PublicKey, LAMPORTS_PER_SOL, Keypair } from '@solana/web3.js';
+import { v4 } from 'uuid';
+import nacl from 'tweetnacl';
 
 const URL_PREFIX = "https://api.v-token.io/api/points";
 
@@ -132,4 +134,67 @@ async function queryRanks() {
 
 // 批量查看钱包积分和对应的 sol 资产，rpc 节点限流，串行调用，比较慢
 // queryPoints(true)
-queryRanks()
+// queryRanks()
+
+interface Assets {
+    addrss: string
+    sol: number
+    freeSolg: number
+    lockedSolg: number
+}
+
+async function queryAirDrop(keypair: Keypair) : Promise<Assets>{
+    const message = v4().toString().replaceAll('-', '').substring(0, 8)
+    const signed = nacl.sign.detached(Buffer.from(message), keypair.secretKey)
+    const resp = await fetch('https://sollong-api.sollong.xyz/remote_api/wallet/getWallets', {
+        headers: {
+            'Content-Type': 'application/json',
+            'Origin': '',
+            'Referer': '',
+            'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Mobile Safari/537.36 Edg/123.0.0.0',
+
+            'Chain': 'SOLANA',
+            'Message': message,
+            'Address': keypair.publicKey.toBase58(),
+            'Signature': Buffer.from(signed).toString('hex'),
+        }
+    })
+    const data = await resp.json()
+    if (data.code != 0) {
+        throw new Error(data.message)
+    }
+    const res: Assets = {
+        addrss: keypair.publicKey.toBase58(),
+        sol: 0,
+        freeSolg: 0,
+        lockedSolg: 0,
+    }
+    for (const item of data.result) {
+        if (item.assetType == 'VSOLG') {
+            res.lockedSolg = item.balance
+        } else if (item.assetType == 'SOLG') {
+            res.freeSolg = item.balance
+        } else if (item.assetType == 'SOL') {
+            res.sol = item.balance
+        }
+    }
+    return res
+}
+
+async function queryAllAirdrop() {
+    const wallet = new HDWallet(config.wallet.mnemonic);
+    const count = config.wallet.count;
+    const res: Assets[] = []
+    for (let i = 0; i < count; i++) {
+        const child = wallet.derive(i);
+        try {
+            const assets = await queryAirDrop(child.keypair)
+            res.push(assets)
+        } catch (e) {
+            console.log(`查询 ${child.address} 资产失败`, e)
+        }
+    }
+    console.table(res)
+}
+
+queryAllAirdrop()
