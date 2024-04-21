@@ -19,11 +19,11 @@
 
 | 名称 | 交互类型 | 成本 | 生态 | 备注 | 进度 |
 | -- | -- | -- | -- | -- | -- |
-| avail :ok_hand: | 铸造 NFT | 低 | polkadot | 先领水 | |
+| avail :poop: | 铸造 NFT | 低 | polkadot | 先领水 | 已空投，没刷到 |
 | eclipse :ok_hand: | 铸造、转账、兑换、跨链 | 低 | SOL | 不要把水领完!| |
 | lava :hear_no_evil: | rpc 节点调用 | 低 | Cosmos | 签名的数据由 lava 后台指定，存在安全风险 | 官方开始封 ip，无法正常刷 |
 | frame :warning: | 智能合约交互 | 低 | | 需要领水 Sepolia、测试网 | 据说项目已经失败 |
-| sollong :hear_no_evil: | 邀请、签到 | 低 | SOL | 加入了验证码，无法正常签到 | |
+| sollong :poop: | 邀请、签到 | 低 | SOL | 钱包需要有 0.1`SOL`，上线了滑块验证码，脚本失效 | 已空投，低保 150，刷的积分被清零 |
 | grass :hear_no_evil: | 挖矿 | 中 | | 按公网 ip 计算，云服务器 ip 无积分 | 4.9 第三期挖矿结束 |
 | spepe :poop: | 登记钱包地址 | 低 | SOL | 脚本失效，官网加了人机检查 | 未按计划发币 |
 | soll :poop: | 登记钱包地址 | 低 | SOL | 募集到了一些 SOL，可能有空投（疑似 spepe 同一项目方）| 未按计划发币 |
